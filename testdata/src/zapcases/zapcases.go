@@ -24,10 +24,10 @@ func validLoggerCalls() {
 }
 
 func invalidLoggerCalls() {
-	zapLogger.Info("Request completed") // want `log message must start with a lowercase letter`
-	zapLogger.Warn("ошибка запроса") // want `log message must be in English \(ASCII only\)`
-	zapLogger.Error("request failed!") // want `log message must not contain special characters or emoji`
-	zapLogger.Debug("secret rotation failed") // want `log message may contain sensitive data`
+	zapLogger.Info("Request completed")                                        // want `log message must start with a lowercase letter`
+	zapLogger.Warn("ошибка запроса")                                           // want `log message must be in English \(ASCII only\)`
+	zapLogger.Error("request failed!")                                         // want `log message must not contain special characters or emoji`
+	zapLogger.Debug("secret rotation failed")                                  // want `log message may contain sensitive data`
 	zapLogger.With(zap.String("component", "db")).Info("Token refresh failed") // want `log message must start with a lowercase letter` `log message may contain sensitive data`
 }
 
@@ -40,10 +40,10 @@ func validSugaredCalls() {
 }
 
 func invalidSugaredCalls() {
-	sugarLogger.Infow("Request completed", "component", "api") // want `log message must start with a lowercase letter`
-	sugarLogger.Warnw("ошибка запроса", "component", "api") // want `log message must be in English \(ASCII only\)`
-	sugarLogger.Errorw("request failed?", "component", "db") // want `log message must not contain special characters or emoji`
-	sugarLogger.Debugw("auth token rotated", "component", "auth") // want `log message may contain sensitive data`
+	sugarLogger.Infow("Request completed", "component", "api")      // want `log message must start with a lowercase letter`
+	sugarLogger.Warnw("ошибка запроса", "component", "api")         // want `log message must be in English \(ASCII only\)`
+	sugarLogger.Errorw("request failed?", "component", "db")        // want `log message must not contain special characters or emoji`
+	sugarLogger.Debugw("auth token rotated", "component", "auth")   // want `log message may contain sensitive data`
 	zapLogger.Sugar().Infow("Api_key rotated", "component", "auth") // want `log message must start with a lowercase letter` `log message may contain sensitive data`
 }
 

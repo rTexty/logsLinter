@@ -9,10 +9,10 @@ import (
 )
 
 var (
-	mixedCtx    = context.Background()
-	mixedSlog   = slog.New(slog.NewTextHandler(io.Discard, nil))
-	mixedZap    = zap.NewNop()
-	mixedSugar  = mixedZap.Sugar()
+	mixedCtx   = context.Background()
+	mixedSlog  = slog.New(slog.NewTextHandler(io.Discard, nil))
+	mixedZap   = zap.NewNop()
+	mixedSugar = mixedZap.Sugar()
 )
 
 func validBoundaryCases() {
@@ -24,9 +24,9 @@ func validBoundaryCases() {
 }
 
 func invalidBoundaryCases() {
-	slog.Info("auth flow started") // want `log message may contain sensitive data`
-	mixedSlog.Warn("token refresh failed") // want `log message may contain sensitive data`
-	mixedZap.Error("api_key rotation failed") // want `log message may contain sensitive data`
+	slog.Info("auth flow started")                                 // want `log message may contain sensitive data`
+	mixedSlog.Warn("token refresh failed")                         // want `log message may contain sensitive data`
+	mixedZap.Error("api_key rotation failed")                      // want `log message may contain sensitive data`
 	mixedSugar.Infow("password reset issued", "component", "auth") // want `log message may contain sensitive data`
 }
 
@@ -41,8 +41,8 @@ func skippedDynamicConcatenationCases() {
 }
 
 func multipleViolationCases() {
-	slog.Info("Password leaked!") // want `log message must start with a lowercase letter` `log message must not contain special characters or emoji` `log message may contain sensitive data`
-	mixedSlog.Log(mixedCtx, slog.LevelError, "Тoken leaked?") // want `log message must start with a lowercase letter` `log message must be in English \(ASCII only\)` `log message must not contain special characters or emoji`
-	mixedZap.Warn("Secret rotation failed!") // want `log message must start with a lowercase letter` `log message must not contain special characters or emoji` `log message may contain sensitive data`
+	slog.Info("Password leaked!")                                // want `log message must start with a lowercase letter` `log message must not contain special characters or emoji` `log message may contain sensitive data`
+	mixedSlog.Log(mixedCtx, slog.LevelError, "Тoken leaked?")    // want `log message must start with a lowercase letter` `log message must be in English \(ASCII only\)` `log message must not contain special characters or emoji`
+	mixedZap.Warn("Secret rotation failed!")                     // want `log message must start with a lowercase letter` `log message must not contain special characters or emoji` `log message may contain sensitive data`
 	mixedSugar.Errorw("Auth token leaked?", "component", "auth") // want `log message must start with a lowercase letter` `log message must not contain special characters or emoji` `log message may contain sensitive data`
 }
