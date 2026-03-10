@@ -41,23 +41,49 @@ type violation struct {
 	message string
 }
 
+type ruleDefinition struct {
+	ruleID  string
+	message string
+	check   func(messageSample) (violation, bool)
+}
+
+var ruleDefinitions = []ruleDefinition{
+	{
+		ruleID:  ruleLowercaseStart,
+		message: msgLowercaseStart,
+		check: func(sample messageSample) (violation, bool) {
+			return checkLowercaseStart(sample.text)
+		},
+	},
+	{
+		ruleID:  ruleASCIIOnly,
+		message: msgASCIIOnly,
+		check: func(sample messageSample) (violation, bool) {
+			return checkASCIIOnly(sample.text)
+		},
+	},
+	{
+		ruleID:  ruleNoSpecialChars,
+		message: msgNoSpecialChars,
+		check: func(sample messageSample) (violation, bool) {
+			return checkNoSpecialCharsOrEmoji(sample.text)
+		},
+	},
+	{
+		ruleID:  ruleSensitiveData,
+		message: msgSensitiveData,
+		check:   checkSensitiveData,
+	},
+}
+
 func evaluateRules(sample messageSample) []violation {
 	violations := make([]violation, 0, 4)
 
-	if violation, ok := checkLowercaseStart(sample.text); ok {
-		violations = append(violations, violation)
-	}
-
-	if violation, ok := checkASCIIOnly(sample.text); ok {
-		violations = append(violations, violation)
-	}
-
-	if violation, ok := checkNoSpecialCharsOrEmoji(sample.text); ok {
-		violations = append(violations, violation)
-	}
-
-	if violation, ok := checkSensitiveData(sample); ok {
-		violations = append(violations, violation)
+	for _, definition := range ruleDefinitions {
+		violation, ok := definition.check(sample)
+		if ok {
+			violations = append(violations, violation)
+		}
 	}
 
 	return violations
