@@ -1,6 +1,13 @@
-# Ignore everything
-*
+# Editor and OS noise
+.DS_Store
+.idea/
 
-# But track these
-!.gitignore
-!README.md
+# Build outputs
+bin/
+dist/
+coverage.out
+*.test
+
+# Local custom golangci-lint binaries
+custom-gcl
+custom-golangci-lint
