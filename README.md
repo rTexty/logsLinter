@@ -60,6 +60,7 @@ go mod tidy
 - Dependency review runs on pull requests.
 - Dependabot tracks both Go modules and GitHub Actions.
 - Releases are built from Git tags matching `v*` and publish packaged binaries plus `SHA256SUMS.txt`.
+- Changelog and release note conventions are documented in `CHANGELOG.md` and `docs/release-policy.md`.
 - Recommended GitHub branch ruleset settings are documented in `docs/github-ruleset.md`.
 
 ## Release Process
@@ -77,6 +78,8 @@ The release workflow will:
 - build `logslinter` for Linux, macOS, and Windows
 - upload `.tar.gz` and `.zip` artifacts
 - publish a GitHub Release with generated notes and `SHA256SUMS.txt`
+
+Release note categorization is driven by pull request labels configured in `.github/release.yml`.
 
 ## Status
 
