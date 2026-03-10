@@ -143,23 +143,23 @@ name: custom-golangci-lint
 destination: ./bin
 
 plugins:
-	- module: github.com/rTexty/logsLinter
-		import: github.com/rTexty/logsLinter/plugin
-		path: .
+  - module: github.com/rTexty/logsLinter
+    import: github.com/rTexty/logsLinter/plugin
+    path: .
 ```
 
 ```yaml
 version: "2"
 
 linters:
-	default: none
-	enable:
-		- logslinter
-	settings:
-		custom:
-			logslinter:
-				type: module
-				description: Validate literal slog and zap log messages with logsLinter.
+  default: none
+  enable:
+    - logslinter
+  settings:
+    custom:
+      logslinter:
+        type: module
+        description: Validate literal slog and zap log messages with logsLinter.
 ```
 
 ## Verification
@@ -167,6 +167,24 @@ linters:
 - Unit coverage exists for rule evaluation, extraction, diagnostics, and logger call inspection
 - Integration coverage runs through `analysistest` fixtures for `slog`, `zap`, and mixed edge cases
 - Current verification baseline is `go test ./...`
+
+## Known Limitations
+
+- Only string literals and literal-only concatenations are analyzed
+- Dynamic messages such as variables, `fmt.Sprintf(...)`, and mixed literal-plus-variable expressions are intentionally skipped
+- `zap.SugaredLogger` print-style and format-style methods stay out of scope in the MVP
+- The lowercase-start rule does not expose a `SuggestedFix`; auto-rewriting the first rune safely is deferred to avoid Unicode and intent edge cases
+- Internal config types exist for future rule toggles and additional sensitive keywords, but no public runtime configuration is enabled yet
+
+## Release Checklist
+
+- `go test ./... -race -count=1`
+- `go build ./...`
+- `go build -o ./bin/logslinter ./cmd/logslinter`
+- `golangci-lint custom -v`
+- `./bin/custom-golangci-lint run ./...`
+- Verify standalone output on a sample package or repository
+- Create and push the release tag documented below
 
 ## Repository Automation
 
