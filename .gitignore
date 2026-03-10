@@ -11,3 +11,10 @@ coverage.out
 # Local custom golangci-lint binaries
 custom-gcl
 custom-golangci-lint
+
+# Local planning and context artifacts
+.claude/
+CLAUDE.md
+Context.md
+Context/
+tech_spec.pdf
