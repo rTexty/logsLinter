@@ -1,6 +1,20 @@
 # logsLinter
 
+[![CI](https://github.com/rTexty/logsLinter/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rTexty/logsLinter/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/rTexty/logsLinter/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/rTexty/logsLinter/actions/workflows/codeql.yml)
+[![Release](https://github.com/rTexty/logsLinter/actions/workflows/release.yml/badge.svg)](https://github.com/rTexty/logsLinter/actions/workflows/release.yml)
+[![Latest Release](https://img.shields.io/github/v/release/rTexty/logsLinter)](https://github.com/rTexty/logsLinter/releases)
+
 Production-ready Go analyzer for validating log messages in `log/slog` and `go.uber.org/zap` codebases.
+
+## Status Panel
+
+| Signal | Status |
+| --- | --- |
+| CI | formatting, vet, tests, build, repository lint |
+| Security | CodeQL, dependency review, Dependabot, SECURITY policy |
+| Releases | tag-based GitHub Release workflow with packaged binaries and checksums |
+| Tooling | standalone CLI, golangci-lint module plugin examples |
 
 ## Goals
 
@@ -45,7 +59,24 @@ go mod tidy
 - CodeQL runs on pull requests and on a weekly schedule.
 - Dependency review runs on pull requests.
 - Dependabot tracks both Go modules and GitHub Actions.
+- Releases are built from Git tags matching `v*` and publish packaged binaries plus `SHA256SUMS.txt`.
 - Recommended GitHub branch ruleset settings are documented in `docs/github-ruleset.md`.
+
+## Release Process
+
+Create and push a semantic version tag:
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The release workflow will:
+
+- run tests before packaging
+- build `logslinter` for Linux, macOS, and Windows
+- upload `.tar.gz` and `.zip` artifacts
+- publish a GitHub Release with generated notes and `SHA256SUMS.txt`
 
 ## Status
 
