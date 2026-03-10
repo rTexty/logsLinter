@@ -24,9 +24,9 @@ func validTopLevelCalls() {
 }
 
 func invalidTopLevelCalls() {
-	slog.Info("Starting server")          // want `log message must start with a lowercase letter`
-	slog.Warn("ошибка подключения")       // want `log message must be in English \(ASCII only\)`
-	slog.Error("server started!")         // want `log message must not contain special characters or emoji`
+	slog.Info("Starting server")           // want `log message must start with a lowercase letter`
+	slog.Warn("ошибка подключения")        // want `log message must be in English \(ASCII only\)`
+	slog.Error("server started!")          // want `log message must not contain special characters or emoji`
 	slog.Debug("password rotation failed") // want `log message may contain sensitive data`
 }
 
@@ -38,9 +38,9 @@ func validLoggerMethodCalls() {
 }
 
 func invalidLoggerMethodCalls() {
-	slogLogger.Info("Connection established") // want `log message must start with a lowercase letter`
-	slogLogger.WarnContext(slogCtx, "запрос завершен") // want `log message must be in English \(ASCII only\)`
-	slogLogger.Log(slogCtx, slog.LevelWarn, "worker stopped?") // want `log message must not contain special characters or emoji`
+	slogLogger.Info("Connection established")                                                                // want `log message must start with a lowercase letter`
+	slogLogger.WarnContext(slogCtx, "запрос завершен")                                                       // want `log message must be in English \(ASCII only\)`
+	slogLogger.Log(slogCtx, slog.LevelWarn, "worker stopped?")                                               // want `log message must not contain special characters or emoji`
 	slogLogger.LogAttrs(slogCtx, slog.LevelError, "auth secret rotated", slog.String("component", "worker")) // want `log message may contain sensitive data`
 }
 
@@ -53,11 +53,11 @@ func validContextAndChainedCalls() {
 }
 
 func invalidContextAndChainedCalls() {
-	slog.InfoContext(slogCtx, "Shutdown complete") // want `log message must start with a lowercase letter`
-	slog.Log(slogCtx, slog.LevelInfo, "данные обновлены") // want `log message must be in English \(ASCII only\)`
+	slog.InfoContext(slogCtx, "Shutdown complete")                                           // want `log message must start with a lowercase letter`
+	slog.Log(slogCtx, slog.LevelInfo, "данные обновлены")                                    // want `log message must be in English \(ASCII only\)`
 	slog.LogAttrs(slogCtx, slog.LevelInfo, "batch processed...", slog.String("job", "sync")) // want `log message must not contain special characters or emoji`
-	slogLogger.With("component", "api").Info("api_key rotated") // want `log message may contain sensitive data`
-	slogLogger.WithGroup("db").ErrorContext(slogCtx, "Token refresh failed") // want `log message must start with a lowercase letter` `log message may contain sensitive data`
+	slogLogger.With("component", "api").Info("api_key rotated")                              // want `log message may contain sensitive data`
+	slogLogger.WithGroup("db").ErrorContext(slogCtx, "Token refresh failed")                 // want `log message must start with a lowercase letter` `log message may contain sensitive data`
 }
 
 func skippedDynamicCalls() {
