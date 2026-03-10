@@ -8,4 +8,4 @@ linters:
     custom:
       logslinter:
         type: module
-        description: Validate slog and zap log messages with logsLinter.
+        description: Validate literal slog and zap log messages with logsLinter.

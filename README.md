@@ -7,7 +7,7 @@
 
 Production-ready Go analyzer for validating log messages in `log/slog` and `go.uber.org/zap` codebases.
 
-The analyzer is implemented as `golang.org/x/tools/go/analysis` and can run as a standalone binary.
+The analyzer is implemented as `golang.org/x/tools/go/analysis` and can run both as a standalone binary and through the `golangci-lint` module plugin workflow.
 
 ## Status Panel
 
@@ -16,7 +16,7 @@ The analyzer is implemented as `golang.org/x/tools/go/analysis` and can run as a
 | CI | formatting, vet, tests, build, repository lint |
 | Security | CodeQL, dependency review, Dependabot, SECURITY policy |
 | Releases | tag-based GitHub Release workflow with packaged binaries and checksums |
-| Tooling | standalone CLI analyzer |
+| Tooling | standalone CLI, golangci-lint module plugin examples |
 
 ## Supported APIs
 
@@ -33,7 +33,7 @@ The analyzer is implemented as `golang.org/x/tools/go/analysis` and can run as a
 - Catch non-English or non-ASCII log text
 - Flag decorative punctuation and emoji in log messages
 - Prevent accidental logging of potentially sensitive data
-- Integrate with standard Go analysis tooling
+- Integrate with standard Go analysis tooling and `golangci-lint`
 
 ## Rules
 
@@ -113,6 +113,53 @@ This call reports:
 
 - `log message must start with a lowercase letter`
 - `log message may contain sensitive data`
+
+## golangci-lint Module Plugin
+
+The repository contains example plugin configuration for the current module plugin workflow:
+
+- [.custom-gcl.yml](/Users/rtexty/Documents/MyProjects/Programming/logsLinter/.custom-gcl.yml) builds a custom `golangci-lint` binary with `logsLinter` linked in
+- [.golangci.yml](/Users/rtexty/Documents/MyProjects/Programming/logsLinter/.golangci.yml) enables the custom linter as a module plugin
+
+Build a custom `golangci-lint` binary:
+
+```bash
+golangci-lint custom
+```
+
+With the example config in this repository, the custom binary is written to `./bin/custom-golangci-lint`.
+
+Run the custom binary:
+
+```bash
+./bin/custom-golangci-lint run ./...
+```
+
+Minimal local-path plugin config:
+
+```yaml
+version: v2.11.2
+name: custom-golangci-lint
+destination: ./bin
+
+plugins:
+	- module: github.com/rTexty/logsLinter
+		path: .
+```
+
+```yaml
+version: "2"
+
+linters:
+	default: none
+	enable:
+		- logslinter
+	settings:
+		custom:
+			logslinter:
+				type: module
+				description: Validate literal slog and zap log messages with logsLinter.
+```
 
 ## Verification
 
