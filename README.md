@@ -1,9 +1,17 @@
-# logsLinter
-
-[![CI](https://github.com/rTexty/logsLinter/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/rTexty/logsLinter/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/rTexty/logsLinter/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/rTexty/logsLinter/actions/workflows/codeql.yml)
-[![Release](https://github.com/rTexty/logsLinter/actions/workflows/release.yml/badge.svg)](https://github.com/rTexty/logsLinter/actions/workflows/release.yml)
-[![Latest Release](https://img.shields.io/github/v/release/rTexty/logsLinter)](https://github.com/rTexty/logsLinter/releases)
+<div align="center">
+  <h1>logsLinter</h1>
+  <p><strong>Clear, safe, consistent Go log messages.</strong></p>
+  <p>Static analysis for <code>log/slog</code> and <code>go.uber.org/zap</code></p>
+  <p>
+    <a href="https://github.com/rTexty/logsLinter/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/rTexty/logsLinter/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+    <a href="https://github.com/rTexty/logsLinter/actions/workflows/codeql.yml"><img alt="CodeQL" src="https://github.com/rTexty/logsLinter/actions/workflows/codeql.yml/badge.svg?branch=main"></a>
+    <a href="https://github.com/rTexty/logsLinter/actions/workflows/release.yml"><img alt="Release" src="https://github.com/rTexty/logsLinter/actions/workflows/release.yml/badge.svg"></a>
+    <a href="https://github.com/rTexty/logsLinter/releases"><img alt="Latest Release" src="https://img.shields.io/github/v/release/rTexty/logsLinter"></a>
+    <a href="https://pkg.go.dev/github.com/rTexty/logsLinter"><img alt="Go Reference" src="https://pkg.go.dev/badge/github.com/rTexty/logsLinter.svg"></a>
+    <a href="https://goreportcard.com/report/github.com/rTexty/logsLinter"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/rTexty/logsLinter"></a>
+    <a href="https://github.com/rTexty/logsLinter/blob/main/LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green.svg"></a>
+  </p>
+</div>
 
 Literal log messages are one of the easiest places for drift, inconsistency, and accidental secrets to slip into a Go codebase. `logsLinter` turns that into an enforceable rule set for `log/slog` and `go.uber.org/zap`, with a standalone analyzer, `golangci-lint` module plugin support, and safe autofix coverage for the simplest lowercase-start violations.
 
@@ -24,6 +32,27 @@ Built on `golang.org/x/tools/go/analysis`, it is meant to fit into normal Go wor
 - Log messages must not contain sensitive keywords such as `password`, `token`, or `secret`.
 
 For the lowercase-start rule, `logsLinter` also emits a safe `SuggestedFix` when the message is an interpreted string literal whose first rune is an ASCII uppercase letter.
+
+## Tech Spec Coverage
+
+| Task from `tech_spec.pdf` | Status |
+| --- | --- |
+| Support `log/slog` log calls | Done |
+| Support `go.uber.org/zap` log calls | Done |
+| Enforce lowercase-start log messages | Done |
+| Enforce English-only ASCII log messages | Done |
+| Reject decorative special characters and emoji | Done |
+| Detect potentially sensitive data keywords in log messages | Done |
+| Integrate as a `go/analysis` analyzer | Done |
+| Work as a standalone binary | Done |
+| Work through `golangci-lint` module plugin flow | Done |
+| Skip dynamic and non-literal messages to avoid false positives | Done |
+| Emit precise diagnostics with file position and rule meaning | Done |
+| Cover behavior with `analysistest` and fixture-based tests | Done |
+| Provide README build, usage, and integration documentation | Done |
+| Bonus: rule configuration via `.golangci.yml` | Done |
+| Bonus: safe `SuggestedFixes` for auto-correctable cases | Done |
+| Bonus: CI/CD pipeline for build, test, and release automation | Done |
 
 ## Example
 
