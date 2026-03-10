@@ -1,0 +1,7 @@
+version: v2.11.2
+name: custom-golangci-lint
+destination: .
+
+plugins:
+  - module: github.com/rTexty/logsLinter
+    path: .

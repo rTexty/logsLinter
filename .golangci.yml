@@ -1,0 +1,11 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - logslinter
+  settings:
+    custom:
+      logslinter:
+        type: module
+        description: Validate slog and zap log messages with logsLinter.
