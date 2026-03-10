@@ -21,14 +21,14 @@ const (
 	msgSensitiveData  = "log message may contain sensitive data"
 )
 
-var sensitiveDataPatterns = []*regexp.Regexp{
-	regexp.MustCompile(`(^|[^a-z0-9_])password([^a-z0-9_]|$)`),
-	regexp.MustCompile(`(^|[^a-z0-9_])passwd([^a-z0-9_]|$)`),
-	regexp.MustCompile(`(^|[^a-z0-9_])token([^a-z0-9_]|$)`),
-	regexp.MustCompile(`(^|[^a-z0-9_])secret([^a-z0-9_]|$)`),
-	regexp.MustCompile(`(^|[^a-z0-9_])api_key([^a-z0-9_]|$)`),
-	regexp.MustCompile(`(^|[^a-z0-9_])apikey([^a-z0-9_]|$)`),
-	regexp.MustCompile(`(^|[^a-z0-9_])auth([^a-z0-9_]|$)`),
+var defaultSensitiveKeywords = []string{
+	"password",
+	"passwd",
+	"token",
+	"secret",
+	"api_key",
+	"apikey",
+	"auth",
 }
 
 type messageSample struct {
@@ -41,47 +41,29 @@ type violation struct {
 	message string
 }
 
-type ruleDefinition struct {
-	ruleID  string
-	message string
-	check   func(messageSample) (violation, bool)
-}
-
-var ruleDefinitions = []ruleDefinition{
-	{
-		ruleID:  ruleLowercaseStart,
-		message: msgLowercaseStart,
-		check: func(sample messageSample) (violation, bool) {
-			return checkLowercaseStart(sample.text)
-		},
-	},
-	{
-		ruleID:  ruleASCIIOnly,
-		message: msgASCIIOnly,
-		check: func(sample messageSample) (violation, bool) {
-			return checkASCIIOnly(sample.text)
-		},
-	},
-	{
-		ruleID:  ruleNoSpecialChars,
-		message: msgNoSpecialChars,
-		check: func(sample messageSample) (violation, bool) {
-			return checkNoSpecialCharsOrEmoji(sample.text)
-		},
-	},
-	{
-		ruleID:  ruleSensitiveData,
-		message: msgSensitiveData,
-		check:   checkSensitiveData,
-	},
-}
-
-func evaluateRules(sample messageSample) []violation {
+func evaluateRules(sample messageSample, config Config) []violation {
 	violations := make([]violation, 0, 4)
 
-	for _, definition := range ruleDefinitions {
-		violation, ok := definition.check(sample)
-		if ok {
+	if config.Rules.LowercaseStart {
+		if violation, ok := checkLowercaseStart(sample.text); ok {
+			violations = append(violations, violation)
+		}
+	}
+
+	if config.Rules.ASCIIOnly {
+		if violation, ok := checkASCIIOnly(sample.text); ok {
+			violations = append(violations, violation)
+		}
+	}
+
+	if config.Rules.NoSpecialChars {
+		if violation, ok := checkNoSpecialCharsOrEmoji(sample.text); ok {
+			violations = append(violations, violation)
+		}
+	}
+
+	if config.Rules.SensitiveData {
+		if violation, ok := checkSensitiveDataWithPatterns(sample, config.sensitivePatterns()); ok {
 			violations = append(violations, violation)
 		}
 	}
@@ -139,6 +121,10 @@ func checkNoSpecialCharsOrEmoji(text string) (violation, bool) {
 }
 
 func checkSensitiveData(sample messageSample) (violation, bool) {
+	return checkSensitiveDataWithPatterns(sample, defaultConfig.sensitivePatterns())
+}
+
+func checkSensitiveDataWithPatterns(sample messageSample, patterns []*regexp.Regexp) (violation, bool) {
 	parts := sample.parts
 	if len(parts) == 0 {
 		parts = []string{sample.text}
@@ -147,7 +133,7 @@ func checkSensitiveData(sample messageSample) (violation, bool) {
 	for _, part := range parts {
 		normalized := strings.ToLower(part)
 
-		for _, pattern := range sensitiveDataPatterns {
+		for _, pattern := range patterns {
 			if pattern.MatchString(normalized) {
 				return violation{
 					ruleID:  ruleSensitiveData,

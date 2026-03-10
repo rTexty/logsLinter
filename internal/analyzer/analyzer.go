@@ -1,19 +1,44 @@
 package analyzer
 
 import (
+	"flag"
 	"go/ast"
 
 	"golang.org/x/tools/go/analysis"
 )
 
-// Analyzer reports log message policy violations in supported logger calls.
-var Analyzer = &analysis.Analyzer{
-	Name: "logslinter",
-	Doc:  "report invalid log messages in supported logger calls",
-	Run:  run,
+type analyzerRunner struct {
+	config             Config
+	additionalKeywords keywordListFlag
 }
 
-func run(pass *analysis.Pass) (any, error) {
+// Analyzer reports log message policy violations in supported logger calls.
+var Analyzer = NewAnalyzer(defaultConfig)
+
+func NewAnalyzer(config Config) *analysis.Analyzer {
+	runner := &analyzerRunner{
+		config: config.normalized(),
+	}
+
+	analyzer := &analysis.Analyzer{
+		Name: "logslinter",
+		Doc:  "report invalid log messages in supported logger calls",
+		Run:  runner.run,
+		Flags: *flag.NewFlagSet(
+			"logslinter",
+			flag.ExitOnError,
+		),
+	}
+
+	bindConfigFlags(&analyzer.Flags, &runner.config, &runner.additionalKeywords)
+	return analyzer
+}
+
+func (runner *analyzerRunner) run(pass *analysis.Pass) (any, error) {
+	currentConfig := runner.config.normalized()
+	currentConfig.SensitiveData.AdditionalKeywords = append([]string{}, runner.additionalKeywords.values...)
+	currentConfig = currentConfig.normalized()
+
 	for _, file := range pass.Files {
 		ast.Inspect(file, func(node ast.Node) bool {
 			call, ok := node.(*ast.CallExpr)
@@ -21,7 +46,7 @@ func run(pass *analysis.Pass) (any, error) {
 				return true
 			}
 
-			analyzeCall(pass, call)
+			analyzeCall(pass, call, currentConfig)
 			return true
 		})
 	}
@@ -29,7 +54,7 @@ func run(pass *analysis.Pass) (any, error) {
 	return nil, nil
 }
 
-func analyzeCall(pass *analysis.Pass, call *ast.CallExpr) {
+func analyzeCall(pass *analysis.Pass, call *ast.CallExpr, config Config) {
 	inspectedCall, ok := inspectLogCall(pass, call)
 	if !ok {
 		return
@@ -40,7 +65,7 @@ func analyzeCall(pass *analysis.Pass, call *ast.CallExpr) {
 		return
 	}
 
-	violations := evaluateRules(sample)
+	violations := evaluateRules(sample, config)
 	if len(violations) == 0 {
 		return
 	}

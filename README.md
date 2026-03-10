@@ -9,14 +9,21 @@ Production-ready Go analyzer for validating log messages in `log/slog` and `go.u
 
 The analyzer is implemented as `golang.org/x/tools/go/analysis` and can run both as a standalone binary and through the `golangci-lint` module plugin workflow.
 
-## Status Panel
+## Overview
 
-| Signal | Status |
-| --- | --- |
-| CI | formatting, vet, tests, build, repository lint |
-| Security | CodeQL, dependency review, Dependabot, SECURITY policy |
-| Releases | tag-based GitHub Release workflow with packaged binaries and checksums |
-| Tooling | standalone CLI, golangci-lint module plugin examples |
+- Supports `log/slog` and `go.uber.org/zap`
+- Enforces four log-message rules over literal messages
+- Ships as both a standalone analyzer binary and a `golangci-lint` module plugin
+- Includes unit tests, `analysistest` integration coverage, and release automation
+
+## Rules
+
+- Log messages must start with a lowercase letter
+- Log messages must contain English ASCII text only
+- Log messages must not contain decorative special characters or emoji
+- Log messages must not contain sensitive keywords such as `password`, `token`, or `secret`
+
+For the lowercase-start rule, the analyzer also emits a safe `SuggestedFix` when the message is an interpreted string literal whose first rune is an ASCII uppercase letter.
 
 ## Supported APIs
 
@@ -27,56 +34,13 @@ The analyzer is implemented as `golang.org/x/tools/go/analysis` and can run both
 - `*zap.Logger` methods: `Debug`, `Info`, `Warn`, `Error`
 - `*zap.SugaredLogger` methods with explicit message argument: `Debugw`, `Infow`, `Warnw`, `Errorw`
 
-## Goals
-
-- Enforce consistent log message style
-- Catch non-English or non-ASCII log text
-- Flag decorative punctuation and emoji in log messages
-- Prevent accidental logging of potentially sensitive data
-- Integrate with standard Go analysis tooling and `golangci-lint`
-
-## Rules
-
-- Log messages must start with a lowercase letter
-- Log messages must contain English ASCII text only
-- Log messages must not contain decorative special characters or emoji
-- Log messages must not contain sensitive keywords such as `password`, `token`, or `secret`
-
-## Skipped Cases
-
-- Non-literal messages such as variables, function calls, and `fmt.Sprintf(...)`
-- Literal plus variable concatenation such as `"password: " + secret`
-- `zap.SugaredLogger` print-style methods such as `Info(...)`, `Warn(...)`, `Error(...)`
-- `zap.SugaredLogger` format-style methods such as `Infof(...)`, `Warnf(...)`, `Errorf(...)`
-
-## Development
-
-### Requirements
+## Requirements
 
 - Go 1.23+
 
-### Commands
+## Quick Start
 
-```bash
-# Build
-go build ./...
-
-# Build standalone analyzer binary
-go build -o ./bin/logslinter ./cmd/logslinter
-
-# Test
-go test ./... -race -count=1
-
-# Format
-gofmt -w .
-
-# Tidy dependencies
-go mod tidy
-```
-
-## Standalone Usage
-
-Build the analyzer:
+Build the standalone analyzer:
 
 ```bash
 go build -o ./bin/logslinter ./cmd/logslinter
@@ -114,12 +78,28 @@ This call reports:
 - `log message must start with a lowercase letter`
 - `log message may contain sensitive data`
 
-## golangci-lint Module Plugin
+## Configuration
 
-The repository contains example plugin configuration for the current module plugin workflow:
+### Standalone flags
 
-- [.custom-gcl.yml](/Users/rtexty/Documents/MyProjects/Programming/logsLinter/.custom-gcl.yml) builds a custom `golangci-lint` binary with `logsLinter` linked in
-- [.golangci.yml](/Users/rtexty/Documents/MyProjects/Programming/logsLinter/.golangci.yml) enables the custom linter as a module plugin
+The standalone analyzer exposes rule toggles and custom sensitive keywords:
+
+```bash
+./bin/logslinter \
+  -lowercase-start=true \
+  -english-ascii-only=true \
+  -no-special-chars-or-emoji=true \
+  -no-sensitive-data=true \
+  -additional-sensitive-keywords=credential,session_id \
+  ./...
+```
+
+### golangci-lint module plugin
+
+The repository contains example module-plugin configuration:
+
+- `.custom-gcl.yml` builds a custom `golangci-lint` binary with `logsLinter` linked in
+- `.golangci.yml` enables the custom linter and shows analyzer settings
 
 Build a custom `golangci-lint` binary:
 
@@ -160,21 +140,67 @@ linters:
       logslinter:
         type: module
         description: Validate literal slog and zap log messages with logsLinter.
+        settings:
+          rules:
+            lowercase-start: true
+            english-ascii-only: true
+            no-special-chars-or-emoji: true
+            no-sensitive-data: true
+          sensitive-data:
+            additional-keywords:
+              - credential
+              - session_id
+```
+
+Available plugin settings:
+
+- `rules.lowercase-start`
+- `rules.english-ascii-only`
+- `rules.no-special-chars-or-emoji`
+- `rules.no-sensitive-data`
+- `sensitive-data.additional-keywords`
+
+## Development
+
+Common commands:
+
+```bash
+# Build
+go build ./...
+
+# Build standalone analyzer binary
+go build -o ./bin/logslinter ./cmd/logslinter
+
+# Test
+go test ./... -race -count=1
+
+# Format
+gofmt -w .
+
+# Tidy dependencies
+go mod tidy
 ```
 
 ## Verification
 
 - Unit coverage exists for rule evaluation, extraction, diagnostics, and logger call inspection
 - Integration coverage runs through `analysistest` fixtures for `slog`, `zap`, and mixed edge cases
+- Configurable rule toggles and additional sensitive keywords are covered in analyzer and plugin tests
 - Current verification baseline is `go test ./...`
+
+## Skipped Cases
+
+- Non-literal messages such as variables, function calls, and `fmt.Sprintf(...)`
+- Literal plus variable concatenation such as `"password: " + secret`
+- `zap.SugaredLogger` print-style methods such as `Info(...)`, `Warn(...)`, `Error(...)`
+- `zap.SugaredLogger` format-style methods such as `Infof(...)`, `Warnf(...)`, `Errorf(...)`
 
 ## Known Limitations
 
 - Only string literals and literal-only concatenations are analyzed
 - Dynamic messages such as variables, `fmt.Sprintf(...)`, and mixed literal-plus-variable expressions are intentionally skipped
 - `zap.SugaredLogger` print-style and format-style methods stay out of scope in the MVP
-- The lowercase-start rule does not expose a `SuggestedFix`; auto-rewriting the first rune safely is deferred to avoid Unicode and intent edge cases
-- Internal config types exist for future rule toggles and additional sensitive keywords, but no public runtime configuration is enabled yet
+- The lowercase-start `SuggestedFix` is intentionally limited to interpreted string literals with an ASCII uppercase first rune
 
 ## Release Checklist
 
@@ -213,7 +239,3 @@ The release workflow will:
 - publish a GitHub Release with generated notes and `SHA256SUMS.txt`
 
 Release note categorization is driven by pull request labels configured in `.github/release.yml`.
-
-## Status
-
-The analyzer MVP is functional: supported `slog` and `zap` calls are inspected, literal messages are validated against the four core rules, and diagnostics are covered by unit tests plus `analysistest` fixtures.

@@ -12,14 +12,21 @@ func init() {
 	register.Plugin(pluginName, New)
 }
 
-type Linter struct{}
+type Linter struct {
+	config projectanalyzer.Config
+}
 
-func New(any) (register.LinterPlugin, error) {
-	return &Linter{}, nil
+func New(settings any) (register.LinterPlugin, error) {
+	decodedSettings, err := register.DecodeSettings[projectanalyzer.Settings](settings)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Linter{config: decodedSettings.ToConfig()}, nil
 }
 
 func (l *Linter) BuildAnalyzers() ([]*analysis.Analyzer, error) {
-	return []*analysis.Analyzer{projectanalyzer.Analyzer}, nil
+	return []*analysis.Analyzer{projectanalyzer.NewAnalyzer(l.config)}, nil
 }
 
 func (l *Linter) GetLoadMode() string {

@@ -21,3 +21,24 @@ func TestAnalyzer(t *testing.T) {
 		})
 	}
 }
+
+func TestAnalyzerHonorsConfig(t *testing.T) {
+	testdata, err := filepath.Abs(filepath.Join("..", "..", "testdata"))
+	if err != nil {
+		t.Fatalf("filepath.Abs(testdata): %v", err)
+	}
+
+	analyzer := NewAnalyzer(Config{
+		Rules: RuleConfig{
+			LowercaseStart: false,
+			ASCIIOnly:      true,
+			NoSpecialChars: true,
+			SensitiveData:  true,
+		},
+		SensitiveData: SensitiveDataConfig{
+			AdditionalKeywords: []string{"credential"},
+		},
+	})
+
+	analysistest.Run(t, testdata, analyzer, "configcases")
+}

@@ -9,3 +9,12 @@ linters:
       logslinter:
         type: module
         description: Validate literal slog and zap log messages with logsLinter.
+        settings:
+          rules:
+            lowercase-start: true
+            english-ascii-only: true
+            no-special-chars-or-emoji: true
+            no-sensitive-data: true
+          sensitive-data:
+            additional-keywords:
+              - credential

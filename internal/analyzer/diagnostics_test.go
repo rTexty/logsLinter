@@ -39,6 +39,15 @@ func TestBuildDiagnostics(t *testing.T) {
 	if diagnostics[1].Category != ruleASCIIOnly {
 		t.Fatalf("second diagnostic category = %q, want %q", diagnostics[1].Category, ruleASCIIOnly)
 	}
+
+	if len(diagnostics[0].SuggestedFixes) != 1 {
+		t.Fatalf("first diagnostic SuggestedFixes count = %d, want 1", len(diagnostics[0].SuggestedFixes))
+	}
+
+	firstEdit := diagnostics[0].SuggestedFixes[0].TextEdits[0]
+	if string(firstEdit.NewText) != `"starting server"` {
+		t.Fatalf("first diagnostic fix = %s, want %s", string(firstEdit.NewText), `"starting server"`)
+	}
 }
 
 func TestBuildDiagnosticsNilCases(t *testing.T) {
@@ -55,5 +64,23 @@ func TestBuildDiagnosticsNilCases(t *testing.T) {
 
 	if diagnostics := buildDiagnostics(expr, nil); diagnostics != nil {
 		t.Fatalf("buildDiagnostics(expr, nil) = %#v, want nil", diagnostics)
+	}
+}
+
+func TestBuildDiagnosticsSkipsUnsafeSuggestedFixes(t *testing.T) {
+	t.Parallel()
+
+	expr, err := parser.ParseExpr("`Starting server`")
+	if err != nil {
+		t.Fatalf("ParseExpr: %v", err)
+	}
+
+	diagnostics := buildDiagnostics(expr, []violation{{ruleID: ruleLowercaseStart, message: msgLowercaseStart}})
+	if len(diagnostics) != 1 {
+		t.Fatalf("buildDiagnostics() count = %d, want 1", len(diagnostics))
+	}
+
+	if len(diagnostics[0].SuggestedFixes) != 0 {
+		t.Fatalf("raw string SuggestedFixes count = %d, want 0", len(diagnostics[0].SuggestedFixes))
 	}
 }
