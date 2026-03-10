@@ -4,33 +4,45 @@ import (
 	"go/ast"
 	"go/token"
 	"strconv"
+	"strings"
 )
 
 func extractMessage(expr ast.Expr) (messageSample, bool) {
+	parts, ok := extractMessageParts(expr)
+	if !ok {
+		return messageSample{}, false
+	}
+
+	return newMessageSample(parts), true
+}
+
+func extractMessageParts(expr ast.Expr) ([]string, bool) {
 	switch currentExpr := expr.(type) {
 	case *ast.BasicLit:
-		return extractBasicLiteral(currentExpr)
+		sample, ok := extractBasicLiteral(currentExpr)
+		if !ok {
+			return nil, false
+		}
+
+		return sample.parts, true
 	case *ast.BinaryExpr:
 		if currentExpr.Op != token.ADD {
-			return messageSample{}, false
+			return nil, false
 		}
 
-		left, ok := extractMessage(currentExpr.X)
+		left, ok := extractMessageParts(currentExpr.X)
 		if !ok {
-			return messageSample{}, false
+			return nil, false
 		}
 
-		right, ok := extractMessage(currentExpr.Y)
+		right, ok := extractMessageParts(currentExpr.Y)
 		if !ok {
-			return messageSample{}, false
+			return nil, false
 		}
 
-		return messageSample{
-			text:  left.text + right.text,
-			parts: append(append([]string{}, left.parts...), right.parts...),
-		}, true
+		return append(append([]string{}, left...), right...), true
 	default:
-		return messageSample{}, false
+		return nil, false
 	}
 }
 
@@ -48,4 +60,13 @@ func extractBasicLiteral(literal *ast.BasicLit) (messageSample, bool) {
 		text:  text,
 		parts: []string{text},
 	}, true
+}
+
+func newMessageSample(parts []string) messageSample {
+	normalizedParts := append([]string{}, parts...)
+
+	return messageSample{
+		text:  strings.Join(normalizedParts, ""),
+		parts: normalizedParts,
+	}
 }
