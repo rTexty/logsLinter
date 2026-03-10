@@ -33,6 +33,28 @@ Built on `golang.org/x/tools/go/analysis`, it is meant to fit into normal Go wor
 
 For the lowercase-start rule, `logsLinter` also emits a safe `SuggestedFix` when the message is an interpreted string literal whose first rune is an ASCII uppercase letter.
 
+## Quick Start
+
+Build the standalone analyzer:
+
+```bash
+go build -o ./bin/logslinter ./cmd/logslinter
+```
+
+Run it directly on packages:
+
+```bash
+./bin/logslinter ./...
+```
+
+Or use it through `go vet` as a `vettool`:
+
+```bash
+go vet -vettool=$(pwd)/bin/logslinter ./...
+```
+
+The command exits with a non-zero status when diagnostics are reported or package loading fails.
+
 ## Tech Spec Coverage
 
 | Task from `tech_spec.pdf` | Status |
@@ -91,28 +113,6 @@ slog.Info("starting server")
 ## Requirements
 
 - Go 1.24+
-
-## Quick Start
-
-Build the standalone analyzer:
-
-```bash
-go build -o ./bin/logslinter ./cmd/logslinter
-```
-
-Run it directly on packages:
-
-```bash
-./bin/logslinter ./...
-```
-
-Or use it through `go vet` as a `vettool`:
-
-```bash
-go vet -vettool=$(pwd)/bin/logslinter ./...
-```
-
-The command exits with a non-zero status when diagnostics are reported or package loading fails.
 
 ## Configuration
 
