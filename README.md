@@ -7,6 +7,8 @@
 
 Production-ready Go analyzer for validating log messages in `log/slog` and `go.uber.org/zap` codebases.
 
+The analyzer is implemented as `golang.org/x/tools/go/analysis` and can run as a standalone binary.
+
 ## Status Panel
 
 | Signal | Status |
@@ -14,7 +16,16 @@ Production-ready Go analyzer for validating log messages in `log/slog` and `go.u
 | CI | formatting, vet, tests, build, repository lint |
 | Security | CodeQL, dependency review, Dependabot, SECURITY policy |
 | Releases | tag-based GitHub Release workflow with packaged binaries and checksums |
-| Tooling | standalone CLI, golangci-lint module plugin examples |
+| Tooling | standalone CLI analyzer |
+
+## Supported APIs
+
+- `log/slog` top-level calls: `Debug`, `Info`, `Warn`, `Error`
+- `log/slog` context variants: `DebugContext`, `InfoContext`, `WarnContext`, `ErrorContext`
+- `log/slog` structured variants: `Log`, `LogAttrs`
+- `*slog.Logger` methods, including chained `With(...)` and `WithGroup(...)`
+- `*zap.Logger` methods: `Debug`, `Info`, `Warn`, `Error`
+- `*zap.SugaredLogger` methods with explicit message argument: `Debugw`, `Infow`, `Warnw`, `Errorw`
 
 ## Goals
 
@@ -22,14 +33,21 @@ Production-ready Go analyzer for validating log messages in `log/slog` and `go.u
 - Catch non-English or non-ASCII log text
 - Flag decorative punctuation and emoji in log messages
 - Prevent accidental logging of potentially sensitive data
-- Integrate with standard Go analysis tooling and `golangci-lint`
+- Integrate with standard Go analysis tooling
 
-## Planned Rules
+## Rules
 
 - Log messages must start with a lowercase letter
 - Log messages must contain English ASCII text only
 - Log messages must not contain decorative special characters or emoji
 - Log messages must not contain sensitive keywords such as `password`, `token`, or `secret`
+
+## Skipped Cases
+
+- Non-literal messages such as variables, function calls, and `fmt.Sprintf(...)`
+- Literal plus variable concatenation such as `"password: " + secret`
+- `zap.SugaredLogger` print-style methods such as `Info(...)`, `Warn(...)`, `Error(...)`
+- `zap.SugaredLogger` format-style methods such as `Infof(...)`, `Warnf(...)`, `Errorf(...)`
 
 ## Development
 
@@ -43,6 +61,9 @@ Production-ready Go analyzer for validating log messages in `log/slog` and `go.u
 # Build
 go build ./...
 
+# Build standalone analyzer binary
+go build -o ./bin/logslinter ./cmd/logslinter
+
 # Test
 go test ./... -race -count=1
 
@@ -52,6 +73,52 @@ gofmt -w .
 # Tidy dependencies
 go mod tidy
 ```
+
+## Standalone Usage
+
+Build the analyzer:
+
+```bash
+go build -o ./bin/logslinter ./cmd/logslinter
+```
+
+Run it directly on packages:
+
+```bash
+./bin/logslinter ./...
+```
+
+Or use it through `go vet` as a `vettool`:
+
+```bash
+go vet -vettool=$(pwd)/bin/logslinter ./...
+```
+
+The command exits with a non-zero status when diagnostics are reported or package loading fails.
+
+Example diagnostics:
+
+```text
+internal/service/auth.go:42:18: log message must start with a lowercase letter
+internal/service/auth.go:42:18: log message may contain sensitive data
+```
+
+Example:
+
+```go
+slog.Info("Starting auth token rotation")
+```
+
+This call reports:
+
+- `log message must start with a lowercase letter`
+- `log message may contain sensitive data`
+
+## Verification
+
+- Unit coverage exists for rule evaluation, extraction, diagnostics, and logger call inspection
+- Integration coverage runs through `analysistest` fixtures for `slog`, `zap`, and mixed edge cases
+- Current verification baseline is `go test ./...`
 
 ## Repository Automation
 
@@ -83,4 +150,4 @@ Release note categorization is driven by pull request labels configured in `.git
 
 ## Status
 
-The repository is currently being scaffolded. The standalone analyzer entrypoint, analyzer package, test fixtures, and `golangci-lint` integration examples are implemented incrementally from the feature plan in `Context/Features/001-LogsLinter/Steps.md`.
+The analyzer MVP is functional: supported `slog` and `zap` calls are inspected, literal messages are validated against the four core rules, and diagnostics are covered by unit tests plus `analysistest` fixtures.
