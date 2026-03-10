@@ -8,12 +8,14 @@ import (
 )
 
 const slogPackagePath = "log/slog"
+const zapPackagePath = "go.uber.org/zap"
 
 type loggerFamily string
 
 const (
 	loggerFamilyUnknown loggerFamily = ""
 	loggerFamilySlog    loggerFamily = "slog"
+	loggerFamilyZap     loggerFamily = "zap"
 )
 
 type logCall struct {
@@ -23,6 +25,10 @@ type logCall struct {
 
 func inspectLogCall(pass *analysis.Pass, call *ast.CallExpr) (logCall, bool) {
 	if inspectedCall, ok := inspectSlogCall(pass, call); ok {
+		return inspectedCall, true
+	}
+
+	if inspectedCall, ok := inspectZapCall(pass, call); ok {
 		return inspectedCall, true
 	}
 
@@ -42,6 +48,23 @@ func inspectSlogCall(pass *analysis.Pass, call *ast.CallExpr) (logCall, bool) {
 
 	return logCall{
 		family:  loggerFamilySlog,
+		message: call.Args[messageIndex],
+	}, true
+}
+
+func inspectZapCall(pass *analysis.Pass, call *ast.CallExpr) (logCall, bool) {
+	selector, ok := call.Fun.(*ast.SelectorExpr)
+	if !ok {
+		return logCall{}, false
+	}
+
+	messageIndex, ok := zapMessageArgIndex(pass, selector)
+	if !ok || messageIndex >= len(call.Args) {
+		return logCall{}, false
+	}
+
+	return logCall{
+		family:  loggerFamilyZap,
 		message: call.Args[messageIndex],
 	}, true
 }
@@ -84,6 +107,36 @@ func slogMethodMessageArgIndex(name string) (int, bool) {
 	}
 }
 
+func zapMessageArgIndex(pass *analysis.Pass, selector *ast.SelectorExpr) (int, bool) {
+	if isZapLoggerMethod(pass, selector) {
+		return zapLoggerMessageArgIndex(selector.Sel.Name)
+	}
+
+	if isZapSugaredLoggerMethod(pass, selector) {
+		return zapSugaredLoggerMessageArgIndex(selector.Sel.Name)
+	}
+
+	return 0, false
+}
+
+func zapLoggerMessageArgIndex(name string) (int, bool) {
+	switch name {
+	case "Debug", "Info", "Warn", "Error":
+		return 0, true
+	default:
+		return 0, false
+	}
+}
+
+func zapSugaredLoggerMessageArgIndex(name string) (int, bool) {
+	switch name {
+	case "Debugw", "Infow", "Warnw", "Errorw":
+		return 0, true
+	default:
+		return 0, false
+	}
+}
+
 func isSlogPackageSelector(pass *analysis.Pass, selector *ast.SelectorExpr) bool {
 	pkgIdent, ok := selector.X.(*ast.Ident)
 	if !ok {
@@ -106,6 +159,24 @@ func isSlogLoggerMethod(pass *analysis.Pass, selector *ast.SelectorExpr) bool {
 	}
 
 	return isNamedType(selection.Recv(), slogPackagePath, "Logger")
+}
+
+func isZapLoggerMethod(pass *analysis.Pass, selector *ast.SelectorExpr) bool {
+	selection := pass.TypesInfo.Selections[selector]
+	if selection == nil {
+		return false
+	}
+
+	return isNamedType(selection.Recv(), zapPackagePath, "Logger")
+}
+
+func isZapSugaredLoggerMethod(pass *analysis.Pass, selector *ast.SelectorExpr) bool {
+	selection := pass.TypesInfo.Selections[selector]
+	if selection == nil {
+		return false
+	}
+
+	return isNamedType(selection.Recv(), zapPackagePath, "SugaredLogger")
 }
 
 func isNamedType(currentType types.Type, packagePath, typeName string) bool {
