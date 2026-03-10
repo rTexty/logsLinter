@@ -50,5 +50,5 @@ jobs:
       - name: Lint repository code
         uses: golangci/golangci-lint-action@v9
         with:
-          version: v2.1
+          version: v2.11.2
           args: --config=.golangci.repo.yml
