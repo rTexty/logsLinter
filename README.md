@@ -39,6 +39,14 @@ gofmt -w .
 go mod tidy
 ```
 
+## Repository Automation
+
+- GitHub Actions CI runs formatting checks, `go vet`, tests, build, and repository linting.
+- CodeQL runs on pull requests and on a weekly schedule.
+- Dependency review runs on pull requests.
+- Dependabot tracks both Go modules and GitHub Actions.
+- Recommended GitHub branch ruleset settings are documented in `docs/github-ruleset.md`.
+
 ## Status
 
 The repository is currently being scaffolded. The standalone analyzer entrypoint, analyzer package, test fixtures, and `golangci-lint` integration examples are implemented incrementally from the feature plan in `Context/Features/001-LogsLinter/Steps.md`.
