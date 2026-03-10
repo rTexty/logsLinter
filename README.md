@@ -144,6 +144,7 @@ destination: ./bin
 
 plugins:
 	- module: github.com/rTexty/logsLinter
+		import: github.com/rTexty/logsLinter/plugin
 		path: .
 ```
 
