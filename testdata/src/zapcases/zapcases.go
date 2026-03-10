@@ -1,5 +1,4 @@
 package zapcases
-package zapcases
 
 import (
 	"fmt"

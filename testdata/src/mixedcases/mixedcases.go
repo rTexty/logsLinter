@@ -1,5 +1,4 @@
 package mixedcases
-package mixedcases
 
 import (
 	"context"
@@ -43,7 +42,7 @@ func skippedDynamicConcatenationCases() {
 
 func multipleViolationCases() {
 	slog.Info("Password leaked!") // want `log message must start with a lowercase letter` `log message must not contain special characters or emoji` `log message may contain sensitive data`
-	mixedSlog.Log(mixedCtx, slog.LevelError, "Тoken leaked?") // want `log message must be in English \(ASCII only\)` `log message must not contain special characters or emoji`
+	mixedSlog.Log(mixedCtx, slog.LevelError, "Тoken leaked?") // want `log message must start with a lowercase letter` `log message must be in English \(ASCII only\)` `log message must not contain special characters or emoji`
 	mixedZap.Warn("Secret rotation failed!") // want `log message must start with a lowercase letter` `log message must not contain special characters or emoji` `log message may contain sensitive data`
 	mixedSugar.Errorw("Auth token leaked?", "component", "auth") // want `log message must start with a lowercase letter` `log message must not contain special characters or emoji` `log message may contain sensitive data`
 }
